@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>51Talk · استبيان أولياء الأمور</title>
+<style>
+  :root{--blue:#1667d9;--yellow:#ffd53d;--ink:#1c2333;--muted:#6b7280;--line:#e5e7eb;--bg:#f4f6fb}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+  header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .bar{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:12px}
+  .logo{height:34px;display:block}
+  .langbtn{border:2px solid var(--blue);color:var(--blue);background:#fff;border-radius:999px;padding:6px 18px;font-weight:700;cursor:pointer;font-size:14px;transition:.2s}
+  .langbtn:hover{background:var(--blue);color:#fff}
+  main{max-width:720px;margin:0 auto;padding:28px 20px 80px}
+  .hero{background:linear-gradient(120deg,var(--blue),#0e4fb0);color:#fff;border-radius:18px;padding:26px 28px;margin-bottom:26px}
+  .hero h1{font-size:22px;margin-bottom:6px}
+  .hero p{opacity:.92;font-size:14px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+  .q{font-weight:700;font-size:15px;display:flex;gap:8px;margin-bottom:4px}
+  .q .n{background:var(--yellow);color:var(--ink);border-radius:8px;min-width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+  .hint{font-size:13px;color:var(--muted);margin-bottom:12px}
+  input[type=text],input[type=tel],input[type=number],select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;font-family:inherit;background:#fcfcfd;transition:.15s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(22,103,217,.12)}
+  textarea{resize:vertical;min-height:80px}
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;font-size:15px;transition:.15s}
+  .opt:hover{border-color:var(--blue)}
+  .opt input{accent-color:var(--blue);width:17px;height:17px}
+  .req{color:#e02424;margin-inline-start:2px}
+  .opt-tag{font-size:12px;color:var(--muted);font-weight:400}
+  .submit{width:100%;background:var(--blue);color:#fff;border:none;border-radius:12px;padding:15px;font-size:17px;font-weight:700;cursor:pointer;transition:.2s;margin-top:8px}
+  .submit:hover{background:#0e4fb0}
+  .submit:disabled{opacity:.6;cursor:not-allowed}
+  .err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:14px;display:none}
+  .done{text-align:center;padding:70px 20px;display:none}
+  .done .badge{width:72px;height:72px;border-radius:50%;background:#dcfce7;color:#16a34a;font-size:36px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px}
+  .done h2{font-size:22px;margin-bottom:8px}
+  .done p{color:var(--muted)}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .upbtn{border:1.5px dashed var(--blue);color:var(--blue);background:#f0f6ff;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .upbtn:hover{background:#e0ecff}
+  @media(max-width:560px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <img src="/logo.png" alt="51Talk" class="logo">
+    <button class="langbtn" id="langBtn" onclick="toggleLang()">English</button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1 data-i18n="title">استبيان تقييم مستوى اللغة الإنجليزية</h1>
+    <p data-i18n="subtitle">أولياء الأمور الكرام، لمساعدتنا على تصميم خطة تعلم تناسب طفلكم، يرجى الإجابة على الأسئلة التالية. تستغرق الإجابة حوالي 3 دقائق.</p>
+  </div>
+
+  <div class="err" id="errBox"></div>
+
+  <form id="surveyForm" autocomplete="off" novalidate>
+    <!-- Basic info -->
+    <div class="card">
+      <div class="q"><span class="n">★</span><span data-i18n="studentName">اسم الطالب</span><span class="req">*</span></div>
+      <input type="text" name="studentName" data-i18n-ph="ph_studentName" placeholder="اكتب اسم الطالب الكامل">
+    </div>
+    <div class="card">
+      <div class="q"><span class="n">★</span><span data-i18n="whatsapp">رقم الواتساب (ولي الأمر)</span><span class="req">*</span></div>
+      <div class="hint" data-i18n="whatsapp_hint">مثال: ‎+966 5x xxx xxxx</div>
+      <input type="tel" name="whatsapp" dir="ltr" placeholder="+966 ...">
+    </div>
+    <div class="card">
+      <div class="q"><span class="n">★</span><span data-i18n="studentId">رقم الطالب</span> <span class="opt-tag" data-i18n="optional">(اختياري)</span></div>
+      <div class="hint" data-i18n="studentId_hint">إذا كنت لا تعرفه، اتركه فارغًا — سيقوم المعلم المساعد (SS) بتأكيده معك لاحقًا.</div>
+      <input type="text" name="studentId" data-i18n-ph="ph_studentId" placeholder="رقم الطالب إن وُجد">
+    </div>
+
+    <!-- Q1 -->
+    <div class="card">
+      <div class="q"><span class="n">1</span><span data-i18n="q1">في أي صف دراسي طفلك؟</span><span class="req">*</span></div>
+      <select name="grade">
+        <option value="" data-i18n="select">— اختر —</option>
+        <option value="G1">الصف الأول / G1</option><option value="G2">الصف الثاني / G2</option>
+        <option value="G3">الصف الثالث / G3</option><option value="G4">الصف الرابع / G4</option>
+        <option value="G5">الصف الخامس / G5</option><option value="G6">الصف السادس / G6</option>
+        <option value="G7">الصف السابع / G7</option><option value="G8">الصف الثامن / G8</option>
+        <option value="G9">الصف التاسع / G9</option><option value="G10">الصف العاشر / G10</option>
+        <option value="G11">الصف الحادي عشر / G11</option><option value="G12">الصف الثاني عشر / G12</option>
+      </select>
+    </div>
+
+    <!-- Q2 -->
+    <div class="card">
+      <div class="q"><span class="n">2</span><span data-i18n="q2">متى بدأ طفلك تعلم اللغة الإنجليزية؟ هل بدأ من الصف الأول؟</span></div>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="englishStart" value="kindergarten"><span data-i18n="q2_a">من مرحلة رياض الأطفال</span></label>
+        <label class="opt"><input type="radio" name="englishStart" value="grade1"><span data-i18n="q2_b">من الصف الأول</span></label>
+        <label class="opt"><input type="radio" name="englishStart" value="later"><span data-i18n="q2_c">من صف آخر لاحق</span></label>
+      </div>
+      <div style="margin-top:12px">
+        <input type="text" name="englishStartNote" data-i18n-ph="q2_ph" placeholder="يمكنك إضافة توضيح (مثال: بدأ من الصف الثالث)">
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="card">
+      <div class="q"><span class="n">3</span><span data-i18n="q3">ما اسم كتاب اللغة الإنجليزية المستخدم في المدرسة؟</span></div>
+      <div class="hint" data-i18n="q3_hint">إذا لم تكن تعرف الاسم، صف غلاف الكتاب (اللون، الصور، العنوان الظاهر).</div>
+      <input type="text" name="textbook" data-i18n-ph="q3_ph" placeholder="اسم الكتاب أو وصف الغلاف">
+      <div style="margin-top:12px">
+        <input type="file" id="coverInput" accept="image/*" capture="environment" style="display:none">
+        <button type="button" class="upbtn" onclick="document.getElementById('coverInput').click()">📷 <span data-i18n="q3_upload">التقط صورة لغلاف الكتاب</span></button>
+        <span class="opt-tag" data-i18n="optional">(اختياري)</span>
+        <div id="coverPreview" style="display:none;margin-top:10px;align-items:center;gap:10px">
+          <img id="coverImg" style="height:90px;border-radius:8px;border:1px solid var(--line)">
+          <button type="button" class="upbtn" onclick="clearCover()" data-i18n="q3_remove" style="padding:6px 12px;font-size:13px">إزالة الصورة</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="card">
+      <div class="q"><span class="n">4</span><span data-i18n="q4">إلى أي وحدة وصل طفلك في الكتاب الآن؟</span></div>
+      <div class="hint" data-i18n="q4_hint">إذا لم تكن تعرف رقم الوحدة، اذكر موضوع آخر درس تعلمه طفلك.</div>
+      <input type="text" name="currentUnit" data-i18n-ph="q4_ph" placeholder="مثال: الوحدة 5، أو درس عن الحيوانات">
+    </div>
+
+    <!-- Q5 -->
+    <div class="card">
+      <div class="q"><span class="n">5</span><span data-i18n="q5">كم حصة لغة إنجليزية يحصل عليها طفلك في المدرسة أسبوعيًا؟</span></div>
+      <input type="number" name="lessonsPerWeek" min="0" max="20" inputmode="numeric" placeholder="مثال: 3">
+    </div>
+
+    <!-- Q6 -->
+    <div class="card">
+      <div class="q"><span class="n">6</span><span data-i18n="q6">كم كانت درجة طفلك في آخر اختبار؟ وفي أي جزء خسر أكبر عدد من الدرجات؟</span></div>
+      <div class="hint" data-i18n="q6_hint">إذا لم تكن هناك درجة حديثة، أخبرنا: ما الجزء الذي يجده طفلك الأصعب في الإنجليزية؟</div>
+      <div class="two">
+        <input type="text" name="lastScore" data-i18n-ph="q6a_ph" placeholder="الدرجة (مثال: 78/100)">
+        <input type="text" name="weakestPart" data-i18n-ph="q6b_ph" placeholder="أصعب جزء (مثال: الاستماع)">
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="card">
+      <div class="q"><span class="n">7</span><span data-i18n="q7">ما الأسلوب الذي تفضله في الحصة: أن يشرح المعلم بالإنجليزية بالكامل أم بمساعدة اللغة العربية؟</span></div>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="teachingStyle" value="full_english"><span data-i18n="q7_a">باللغة الإنجليزية بالكامل</span></label>
+        <label class="opt"><input type="radio" name="teachingStyle" value="arabic_support"><span data-i18n="q7_b">بالإنجليزية مع مساعدة بالعربية</span></label>
+        <label class="opt"><input type="radio" name="teachingStyle" value="mix"><span data-i18n="q7_c">مزيج من اللغتين حسب الحاجة</span></label>
+      </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="card">
+      <div class="q"><span class="n">8</span><span data-i18n="q8">بصرف النظر عن الدرجات، ما التغيير الذي تأمل أن تراه في إنجليزية طفلك؟</span></div>
+      <textarea name="expectations" data-i18n-ph="q8_ph" placeholder="مثال: أن يتحدث بثقة، أن يقرأ بطلاقة..."></textarea>
+    </div>
+
+    <button type="submit" class="submit" id="submitBtn" data-i18n="submit">إرسال الاستبيان</button>
+  </form>
+
+  <div class="done" id="doneBox">
+    <div class="badge">✓</div>
+    <h2 data-i18n="done_title">تم الإرسال بنجاح!</h2>
+    <p data-i18n="done_msg">شكرًا لوقتك. سيتواصل معك فريق 51Talk قريبًا عبر الواتساب.</p>
+  </div>
+</main>
+
+<footer>© 51Talk · <span data-i18n="footer">جميع المعلومات تُستخدم لأغراض تعليمية فقط</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const T = {
+en:{
+  title:"English Learning Survey for Parents",
+  subtitle:"Dear parents, to help us design a learning plan that fits your child, please answer the following questions. It takes about 3 minutes.",
+  studentName:"Student's Name", ph_studentName:"Enter the student's full name",
+  whatsapp:"Parent's WhatsApp Number", whatsapp_hint:"e.g. +966 5x xxx xxxx",
+  studentId:"Student ID", optional:"(optional)",
+  studentId_hint:"If you don't know it, leave it blank — our student supervisor (SS) will confirm it with you later.",
+  ph_studentId:"Student ID if available",
+  select:"— Select —",
+  q1:"What grade is your child in?",
+  q2:"When did your child start learning English? Did they start in Grade 1?",
+  q2_a:"Since kindergarten", q2_b:"Since Grade 1", q2_c:"From a later grade",
+  q2_ph:"Add a note if you like (e.g. started in Grade 3)",
+  q3:"Which English textbook does the school use?",
+  q3_hint:"If you're not sure of the name, describe the cover (color, pictures, visible title).",
+  q3_ph:"Textbook name or cover description",
+  q3_upload:"Take a photo of the textbook cover", q3_remove:"Remove photo",
+  q4:"Which unit is your child currently studying?",
+  q4_hint:"If you don't know the unit number, tell us the topic of the most recent lesson.",
+  q4_ph:"e.g. Unit 5, or a lesson about animals",
+  q5:"How many English lessons does your child have at school per week?",
+  q6:"What was your child's score on the most recent test? Which part lost the most marks?",
+  q6_hint:"If there is no recent score, tell us: which part of English does your child find hardest?",
+  q6a_ph:"Score (e.g. 78/100)", q6b_ph:"Hardest part (e.g. listening)",
+  q7:"Which do you prefer in class: the teacher teaches fully in English, or with Arabic support?",
+  q7_a:"Fully in English", q7_b:"English with Arabic support", q7_c:"A mix of both as needed",
+  q8:"Beyond grades, what change do you hope to see in your child's English?",
+  q8_ph:"e.g. speak with confidence, read fluently...",
+  submit:"Submit Survey",
+  done_title:"Submitted Successfully!",
+  done_msg:"Thank you for your time. The 51Talk team will contact you soon via WhatsApp.",
+  footer:"All information is used for educational purposes only",
+  err_required:"Please fill in the required fields: Student Name, WhatsApp, Grade.",
+  err_fail:"Submission failed. Please check your connection and try again."
+},
+ar:{}};
+
+let coverData='';
+function clearCover(){coverData='';document.getElementById('coverPreview').style.display='none';document.getElementById('coverInput').value='';}
+document.getElementById('coverInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');
+    const s=Math.min(1,1024/Math.max(img.width,img.height));
+    c.width=img.width*s; c.height=img.height*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    coverData=c.toDataURL('image/jpeg',0.8);
+    document.getElementById('coverImg').src=coverData;
+    document.getElementById('coverPreview').style.display='flex';
+    URL.revokeObjectURL(img.src);
+  };
+  img.src=URL.createObjectURL(f);
+});
+
+let lang='ar';
+const arCache={};
+function toggleLang(){
+  lang = lang==='ar' ? 'en' : 'ar';
+  document.documentElement.lang=lang;
+  document.documentElement.dir = lang==='ar'?'rtl':'ltr';
+  document.getElementById('langBtn').textContent = lang==='ar'?'English':'العربية';
+  document.title = lang==='ar' ? '51Talk · استبيان أولياء الأمور' : '51Talk · Parent Survey';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.dataset.i18n;
+    if(lang==='en'){ if(!(k in arCache)) arCache[k]=el.textContent; if(T.en[k]) el.textContent=T.en[k]; }
+    else if(k in arCache) el.textContent=arCache[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const k=el.dataset.i18nPh;
+    const ck='ph_'+k;
+    if(lang==='en'){ if(!(ck in arCache)) arCache[ck]=el.placeholder; if(T.en[k]) el.placeholder=T.en[k]; }
+    else if(ck in arCache) el.placeholder=arCache[ck];
+  });
+}
+
+document.getElementById('surveyForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const f=e.target, err=document.getElementById('errBox');
+  err.style.display='none';
+  const data={lang};
+  new FormData(f).forEach((v,k)=>data[k]=v);
+  data.textbookImage=coverData;
+  if(!data.studentName?.trim()||!data.whatsapp?.trim()||!data.grade){
+    err.textContent=T[lang]?.err_required||T.en.err_required;
+    if(lang==='ar') err.textContent='يرجى تعبئة الحقول المطلوبة: اسم الطالب، رقم الواتساب، الصف الدراسي.';
+    err.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); return;
+  }
+  const btn=document.getElementById('submitBtn'); btn.disabled=true;
+  try{
+    // 1. 有封面图则先上传到 Supabase Storage
+    let textbook_image='';
+    if(data.textbookImage && data.textbookImage.startsWith('data:image/')){
+      const blob=await (await fetch(data.textbookImage)).blob();
+      const fname='cover-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.jpg';
+      const {error:upErr}=await sb.storage.from('covers').upload(fname, blob, {contentType:'image/jpeg'});
+      if(upErr) throw upErr;
+      textbook_image=sb.storage.from('covers').getPublicUrl(fname).data.publicUrl;
+    }
+    // 2. 写入数据库
+    const {error}=await sb.from('submissions').insert({
+      lang, student_name:data.studentName.trim(), whatsapp:data.whatsapp.trim(),
+      student_id:(data.studentId||'').trim(), grade:data.grade,
+      english_start:data.englishStart||'', english_start_note:(data.englishStartNote||'').trim(),
+      textbook:(data.textbook||'').trim(), textbook_image,
+      current_unit:(data.currentUnit||'').trim(), lessons_per_week:(data.lessonsPerWeek||'').trim(),
+      last_score:(data.lastScore||'').trim(), weakest_part:(data.weakestPart||'').trim(),
+      teaching_style:data.teachingStyle||'', expectations:(data.expectations||'').trim()
+    });
+    if(error) throw error;
+    f.style.display='none';
+    document.getElementById('doneBox').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch{
+    err.textContent=lang==='ar'?'فشل الإرسال، يرجى التحقق من الاتصال والمحاولة مجددًا.':T.en.err_fail;
+    err.style.display='block'; btn.disabled=false;
+  }
+});
+</script>
+</body>
+</html>

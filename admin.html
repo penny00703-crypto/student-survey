@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>51Talk · 问卷数据后台</title>
+<style>
+  :root{--blue:#1667d9;--yellow:#ffd53d;--ink:#1c2333;--muted:#6b7280;--line:#e5e7eb;--bg:#f4f6fb}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:#fff;border-bottom:1px solid var(--line)}
+  .bar{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 24px}
+  .logo{height:34px}
+  h1{font-size:18px}
+  .spacer{flex:1}
+  .btn{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-blue:hover{background:#0e4fb0}
+  .btn-line{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+  .btn-line:hover{border-color:var(--blue);color:var(--blue)}
+  main{max-width:1400px;margin:0 auto;padding:24px}
+  .stats{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 22px;min-width:150px}
+  .stat .v{font-size:28px;font-weight:800;color:var(--blue)}
+  .stat .k{font-size:13px;color:var(--muted)}
+  .toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:220px;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px}
+  .toolbar input:focus{outline:none;border-color:var(--blue)}
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1600px}
+  th{background:#f8fafc;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:700;position:sticky;top:0}
+  td{padding:10px 12px;border-bottom:1px solid #f1f3f7;vertical-align:top;max-width:260px;word-break:break-word}
+  tr:hover td{background:#f8fbff}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px}
+  .del{color:#dc2626;cursor:pointer;background:none;border:none;font-size:13px}
+  .del:hover{text-decoration:underline}
+  .tag{display:inline-block;background:#eef4ff;color:var(--blue);border-radius:6px;padding:2px 8px;font-size:12px}
+  .notice{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <img src="logo.png" class="logo" alt="51Talk">
+    <h1>问卷数据后台 · Submissions</h1>
+    <div class="spacer"></div>
+    <button class="btn btn-line" onclick="load()">刷新</button>
+    <button class="btn btn-blue" onclick="exportXlsx()">导出 Excel</button>
+  </div>
+</header>
+<main>
+  <div class="notice" id="notice"></div>
+  <div class="stats">
+    <div class="stat"><div class="v" id="total">0</div><div class="k">总提交数</div></div>
+    <div class="stat"><div class="v" id="today">0</div><div class="k">今日提交</div></div>
+    <div class="stat"><div class="v" id="arCount">0</div><div class="k">阿语填写</div></div>
+    <div class="stat"><div class="v" id="enCount">0</div><div class="k">英语填写</div></div>
+  </div>
+  <div class="toolbar">
+    <input id="search" placeholder="搜索姓名 / WhatsApp / 学号 / 关键词…" oninput="render()">
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>提交时间</th><th>姓名</th><th>WhatsApp</th><th>学号</th><th>年级</th>
+        <th>何时开始学英语</th><th>补充</th><th>教材</th><th>封面图</th><th>当前单元/主题</th>
+        <th>每周课时</th><th>最近分数</th><th>最弱/最难部分</th><th>授课偏好</th><th>期望变化</th><th>语言</th><th></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">暂无数据 · No submissions yet</div>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let rows=[];
+async function load(){
+  const {data,error}=await sb.from('submissions').select('*').order('submitted_at',{ascending:false});
+  const n=document.getElementById('notice');
+  if(error){ n.textContent='读取数据失败：'+error.message+'（请检查 config.js 里的 URL 和 anon key 是否已填写）'; n.style.display='block'; return; }
+  n.style.display='none';
+  rows=data||[];
+  document.getElementById('total').textContent=rows.length;
+  const todayStr=new Date().toDateString();
+  document.getElementById('today').textContent=rows.filter(x=>new Date(x.submitted_at).toDateString()===todayStr).length;
+  document.getElementById('arCount').textContent=rows.filter(x=>x.lang==='ar').length;
+  document.getElementById('enCount').textContent=rows.filter(x=>x.lang==='en').length;
+  render();
+}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const list=q?rows.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q))):rows;
+  const tb=document.getElementById('tbody');
+  document.getElementById('empty').style.display=list.length?'none':'block';
+  tb.innerHTML=list.map(r=>`<tr>
+    <td>${new Date(r.submitted_at).toLocaleString('zh-CN',{hour12:false})}</td>
+    <td><b>${esc(r.student_name)}</b></td><td dir="ltr">${esc(r.whatsapp)}</td>
+    <td>${esc(r.student_id)||'<span style="color:#9ca3af">—</span>'}</td><td>${esc(r.grade)}</td>
+    <td>${esc(r.english_start)}</td><td>${esc(r.english_start_note)}</td>
+    <td>${esc(r.textbook)}</td>
+    <td>${r.textbook_image?`<a href="${esc(r.textbook_image)}" target="_blank"><img src="${esc(r.textbook_image)}" style="height:56px;border-radius:6px;border:1px solid #e5e7eb"></a>`:'<span style="color:#9ca3af">—</span>'}</td>
+    <td>${esc(r.current_unit)}</td><td>${esc(r.lessons_per_week)}</td>
+    <td>${esc(r.last_score)}</td><td>${esc(r.weakest_part)}</td><td>${esc(r.teaching_style)}</td>
+    <td>${esc(r.expectations)}</td><td><span class="tag">${esc(r.lang)}</span></td>
+    <td><button class="del" onclick="del(${r.id},'${esc(r.textbook_image)}')">删除</button></td>
+  </tr>`).join('');
+}
+async function del(id,img){
+  if(!confirm('确定删除这条记录？'))return;
+  await sb.from('submissions').delete().eq('id',id);
+  if(img){ const fname=img.split('/').pop(); await sb.storage.from('covers').remove([fname]); }
+  load();
+}
+const COLS=[
+  ['submitted_at','Submitted At / وقت الإرسال'],['student_name','Student Name / اسم الطالب'],
+  ['whatsapp','WhatsApp / رقم الواتساب'],['student_id','Student ID / رقم الطالب'],
+  ['grade','Grade / الصف الدراسي'],['english_start','English Start / متى بدأ تعلم الإنجليزية'],
+  ['english_start_note','Start Note / ملاحظة البداية'],['textbook','Textbook / الكتاب المدرسي'],
+  ['textbook_image','Cover Image / صورة الغلاف'],['current_unit','Current Unit / الوحدة الحالية'],
+  ['lessons_per_week','Lessons Per Week / عدد الحصص أسبوعيًا'],['last_score','Last Score / آخر درجة'],
+  ['weakest_part','Weakest Part / أصعب جزء'],['teaching_style','Teaching Style / أسلوب التدريس المفضل'],
+  ['expectations','Expectations / التوقعات'],['lang','Language / اللغة'],
+];
+function exportXlsx(){
+  if(!rows.length){alert('暂无数据可导出');return;}
+  const header=COLS.map(c=>c[1]);
+  const data=rows.map(r=>COLS.map(c=>r[c[0]]??''));
+  const ws=XLSX.utils.aoa_to_sheet([header,...data]);
+  ws['!cols']=COLS.map(()=>({wch:22}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Submissions');
+  XLSX.writeFile(wb,'survey-submissions-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+load();
+</script>
+</body>
+</html>
